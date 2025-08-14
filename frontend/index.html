@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAPTCHA SaaS - Frontend Demo</title>
+    <!-- External CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Authentication Section -->
+    <div id="authSection" class="auth-container">
+        <div class="auth-card">
+            <div class="text-center mb-4">
+                <div class="brand-logo">🛡️</div>
+                <h2 class="fw-bold text-primary">CAPTCHA SaaS</h2>
+                <p class="text-muted">Secure your website with our CAPTCHA service</p>
+            </div>
+
+            <!-- Alert Messages -->
+            <div id="alertContainer"></div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h4 class="mb-4 text-center">Welcome Back</h4>
+                <form id="loginFormElement">
+                    <div class="mb-3">
+                        <label class="form-label">Email Email</label>
+                        <input type="text" class="form-control" id="loginEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </button>
+                </form>
+                <p class="text-center">
+                    Don't have an account? 
+                    <a href="#" onclick="showSignupForm()" class="text-decoration-none fw-bold">Create Account</a>
+                </p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" style="display: none;">
+                <h4 class="mb-4 text-center">Create Account</h4>
+                <form id="signupFormElement">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="signupName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="signupEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="signupPassword" placeholder="Create a password (min 6 chars)" minlength="6" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3">
+                        <i class="fas fa-user-plus me-2"></i>Create Account
+                    </button>
+                </form>
+                <p class="text-center">
+                    Already have an account? 
+                    <a href="#" onclick="showLoginForm()" class="text-decoration-none fw-bold">Sign In</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" style="display: none;" class="dashboard-container">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+            <div class="container">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-shield-alt me-2"></i>CAPTCHA SaaS
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Welcome, <strong id="userName">User</strong>
+                    </span>
+                    <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <!-- Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card stats-card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-globe fa-3x mb-3"></i>
+                            <h2 id="websiteCount">0</h2>
+                            <p class="mb-0">Websites Protected</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-key fa-3x text-primary mb-3"></i>
+                            <h2 id="apiKeyCount">0</h2>
+                            <p class="mb-0 text-muted">API Keys Generated</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-shield-check fa-3x text-success mb-3"></i>
+                            <h2 id="activeProtection">Active</h2>
+                            <p class="mb-0 text-muted">Protection Status</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Website Form -->
+            <div class="row mb-4">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add New Website</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="websiteForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Website Name</label>
+                                            <input type="text" class="form-control" id="websiteName" placeholder="My Awesome Website" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Website URL</label>
+                                            <input type="url" class="form-control" id="websiteUrl" placeholder="https://example.com" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CAPTCHA Type</label>
+                                    <select class="form-select" id="captchaType">
+                                        <option value="math">Image</option>
+                                        <!-- <option value="checkbox">Checkbox Verification</option>
+                                        <option value="invisible">Invisible Protection</option> -->
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-magic me-2"></i>Generate CAPTCHA Code
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <i class="fas fa-rocket fa-3x text-info mb-3"></i>
+                            <h5>Quick Start Guide</h5>
+                            <p class="text-muted small">1. Add your website details<br>2. Generate CAPTCHA code<br>3. Copy & paste into your site</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Websites List -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Your Protected Websites</h5>
+                            <span class="badge bg-primary" id="totalWebsites">0 websites</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="websitesList">
+                                <!-- Websites will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Generation Modal -->
+    <div class="modal fade" id="codeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-code me-2"></i>Your CAPTCHA Integration Code
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Integration Instructions:</strong> Copy the code below and paste it into your website where you want the CAPTCHA to appear.
+                    </div>
+
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="codeTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="html-tab" data-bs-toggle="tab" data-bs-target="#html" type="button">
+                                <i class="fab fa-html5 me-2"></i>HTML Code
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="js-tab" data-bs-toggle="tab" data-bs-target="#js" type="button">
+                                <i class="fab fa-js-square me-2"></i>JavaScript
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="css-tab" data-bs-toggle="tab" data-bs-target="#css" type="button">
+                                <i class="fab fa-css3-alt me-2"></i>CSS Styling
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="codeTabContent">
+                        <div class="tab-pane fade show active" id="html" role="tabpanel">
+                            <div class="position-relative">
+                                <div class="code-block" id="htmlCode"></div>
+                                <button class="copy-btn" onclick="copyCode('htmlCode')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="js" role="tabpanel">
+                            <div class="position-relative">
+                                <div class="code-block" id="jsCode"></div>
+                                <button class="copy-btn" onclick="copyCode('jsCode')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="css" role="tabpanel">
+                            <div class="position-relative">
+                                <div class="code-block" id="cssCode"></div>
+                                <button class="copy-btn" onclick="copyCode('cssCode')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-key me-2"></i>Your API Details</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-1"><strong>API Key:</strong> <code id="apiKeyDisplay"></code></p>
+                                <p class="mb-0"><strong>Website:</strong> <span id="websiteNameDisplay"></span></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-question-circle me-2"></i>Need Help?</h6>
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-1 small">📧 Support: support@captchasaas.com</p>
+                                <p class="mb-0 small">📖 Documentation: docs.captchasaas.com</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
