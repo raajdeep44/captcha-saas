@@ -176,3 +176,31 @@
 #         raise HTTPException(status_code=403, detail="Invalid or inactive API key")
     
 #     return website
+
+import secrets
+from fastapi import Depends, APIRouter
+from sqlalchemy.orm import Session
+from app import models, schemas
+from app.config import get_db
+from app.auth import get_current_user
+
+router = APIRouter()
+
+@router.post("/websites", response_model=schemas.WebsiteResponse)
+def create_website(
+    data: schemas.WebsiteCreate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    new_site = models.Website(
+        user_id=current_user.id,
+        website_name=data.website_name,
+        website_url=data.website_url,
+        api_key=secrets.token_hex(16)
+    )
+    db.add(new_site)
+    db.commit()
+    db.refresh(new_site)
+    return new_site
+
+

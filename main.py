@@ -1,18 +1,22 @@
 from fastapi import FastAPI , Depends , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app import auth, models, config , captcha
-from fastapi.security import OAuth2PasswordBearer
+# from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 import os
 from app.models import User
 from app.config import get_db
 from sqlalchemy.orm import Session
 # In your main.py or wherever you initialize FastAPI
-# from app.website import router as website_router
+from app.website import router as website_router
 
 
 
 app = FastAPI()
+
+security = HTTPBearer()  # tells Swagger this API uses HTTP Bearer auth
+
 
 #  CORS CONFIG HERE
 app.add_middleware(
@@ -33,8 +37,8 @@ models.Base.metadata.create_all(bind=config.engine)
 # Routers
 app.include_router(auth.router)
 app.include_router(captcha.router)
-# app.include_router(website_router, prefix="/api", tags=["websites"])
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
+app.include_router(website_router, prefix="/api", tags=["websites"])
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # dashboard
 
