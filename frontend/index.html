@@ -9,6 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
+    <!-- <link rel="stylesheet" href="website_style.css"> -->
 </head>
 <body>
     <!-- Authentication Section -->
@@ -109,21 +110,53 @@
                     <div class="card">
                         <div class="card-body text-center">
                             <i class="fas fa-key fa-3x text-primary mb-3"></i>
-                            <h2 id="apiKeyCount">0</h2>
-                            <p class="mb-0 text-muted">API Keys Generated</p>
+                             <h2 id="captchaCount">0</h2> <!--change to captchacount -->
+                            <p class="mb-0 text-muted">Total CAPTCHA</p>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-body text-center">
-                            <i class="fas fa-shield-check fa-3x text-success mb-3"></i>
-                            <h2 id="activeProtection">Active</h2>
-                            <p class="mb-0 text-muted">Protection Status</p>
-                        </div>
-                    </div>
+                            <i class="fas fa-check-circle fa-3x text-primary mb-3"></i>
+                             <h2 id="captchaSuccessRate">0</h2> <!--change to captchacount -->
+                             <p class="mb-0 text-muted">Success Rate</p>
+                        </div> 
+                    </div> 
                 </div>
             </div>
+
+      <div class="recent-activity">
+      <h3>Recent Activity</h3>
+      <table id="activityTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Website</th>
+            <th>IP Address</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Example static row -->
+          <tr>
+            <td>1</td>
+            <td>example.com</td>
+            <td>192.168.1.1</td>
+            <td><span class="status success">Success</span></td>
+            <td>2025-08-19 12:45</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>myapp.com</td>
+            <td>10.0.0.2</td>
+            <td><span class="status error">Error</span></td>
+            <td>2025-08-19 13:05</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
             <!-- Add Website Form -->
             <div class="row mb-4">

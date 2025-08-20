@@ -135,3 +135,147 @@ body {
     font-size: 2.5rem;
     margin-bottom: 10px;
 }
+
+/* Recent Activity Section */
+.recent-activity {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin: 20px 0;
+  overflow: hidden; /* keep rounded corners around table */
+}
+
+/* Title styling to match brand */
+.recent-activity h3 {
+  margin: 0 0 16px 0;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: 0.2px;
+}
+
+/* Table wrapper for responsiveness */
+#activityTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden; /* clip children corners */
+  font-size: 14px;
+}
+
+/* Table head */
+#activityTable thead th {
+  background: linear-gradient(135deg, var(--primary-color), #6366f1);
+  color: white;
+  text-align: left;
+  padding: 14px 16px;
+  font-weight: 600;
+  position: sticky;
+  top: 0; /* helpful if table scrolls */
+  z-index: 1;
+}
+
+/* Table rows */
+#activityTable tbody tr {
+  background: white;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* Zebra striping */
+#activityTable tbody tr:nth-child(odd) {
+  background: #f9fafb; /* subtle contrast with white */
+}
+
+/* Hover lift to match .card:hover feel */
+#activityTable tbody tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+  background: #f8fafc;
+}
+
+/* Table cells */
+#activityTable th,
+#activityTable td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e5e7eb; /* soft divider */
+}
+
+/* Remove last row divider for clean end */
+#activityTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Column-specific tweaks */
+#activityTable td:nth-child(1) {
+  width: 56px;
+  color: #6b7280; /* muted index */
+}
+
+#activityTable td:nth-child(3) {
+  font-family: 'Monaco', 'Courier New', monospace; /* IP looks good monospaced */
+  font-size: 13px;
+  color: #111827;
+  letter-spacing: 0.2px;
+}
+
+#activityTable td:nth-child(5) {
+  white-space: nowrap; /* keep timestamp on one line */
+  color: #374151;
+}
+
+/* Status pills (Success/Error) */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px; /* pill shape */
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  user-select: none;
+}
+
+/* Success pill uses accent gradient */
+.status.success {
+  color: white;
+  background: linear-gradient(135deg, var(--accent-color), #34d399);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+}
+
+/* Error pill uses danger gradient */
+.status.error {
+  color: white;
+  background: linear-gradient(135deg, var(--danger-color), #f87171);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+}
+
+/* Optional icons inside status (if added later) */
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+}
+
+/* Responsive: stack or scroll on small screens */
+@media (max-width: 640px) {
+  .recent-activity {
+    padding: 16px;
+  }
+  #activityTable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-radius: 10px;
+  }
+  #activityTable th,
+  #activityTable td {
+    padding: 12px 14px;
+  }
+}

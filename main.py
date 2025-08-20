@@ -25,7 +25,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["captcha-id"],  # <-- 🔥 this is important!
+    expose_headers=["*"],  # <-- 🔥 this is important!
 )
 
 # DB setup

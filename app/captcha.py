@@ -7,12 +7,13 @@ import random
 import string
 import io
 from fastapi.responses import StreamingResponse
-from app import models
+from app import models,schemas
 from sqlalchemy.orm import Session
 from app.config import SessionLocal
 from datetime import datetime
 from fastapi import Path
 from app.models import Captcha, CaptchaAttempts
+from app.auth import get_current_user
 
 router = APIRouter()
 
@@ -117,7 +118,7 @@ def verify_captcha(data: CaptchaInput, request: Request, x_api_key: str = Header
 
 
 @router.get("/stats/{website_id}")
-def get_stats(website_id: int = Path(...), db: Session = Depends(get_db)):
+def get_stats(current_user :models.User = Depends(get_current_user), website_id: int = Path(...), db: Session = Depends(get_db)):
     stats = db.query(models.CaptchaStats).filter(models.CaptchaStats.website_id == website_id).first()
     if not stats:
         return {
@@ -140,3 +141,33 @@ def get_stats(website_id: int = Path(...), db: Session = Depends(get_db)):
         "success_rate": round(success_rate, 2),
         "last_used": stats.last_used,
     }
+
+
+@router.get("/recent-activity")
+def get_recent_activity(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    websites = db.query(models.Website).filter(models.Website.user_id == current_user.id).all()
+    website_ids = [w.id for w in websites]
+
+    attempts = (
+        db.query(models.CaptchaAttempts, models.Website.website_name)
+        .join(models.Captcha, models.Captcha.id == models.CaptchaAttempts.captcha_id)
+        .join(models.Website, models.Website.id == models.Captcha.website_id)
+        .filter(models.Website.id.in_(website_ids))
+        .order_by(models.CaptchaAttempts.verified_at.desc())
+        .all()
+    )
+
+    results = []
+    for attempt, website_name in attempts:
+        results.append({
+            "id": attempt.id,
+            "website": website_name,
+            "ip": attempt.user_ip,
+            "status": attempt.success,
+            "time": attempt.verified_at
+        })
+
+    return results

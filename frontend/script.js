@@ -1,6 +1,7 @@
 // Global variables
+const API_BASE = "http://127.0.0.1:8000"; 
 let currentUser = null;
-let websites = [];
+let userWebsites = [];
 let selectedWebsite = null;
 
 // Initialize app when DOM is loaded
@@ -222,8 +223,9 @@ function handleLogout() {
 function loadUserData() {
     console.log('[DATA] Loading user websites...');
     try {
-        const userWebsites = JSON.parse(localStorage.getItem(`websites_${currentUser.id}`) || '[]');
-        websites = userWebsites;
+        // const userWebsites = JSON.parse(localStorage.getItem(`websites_${currentUser.id}`) || '[]');
+        // websites = userWebsites;
+        fetchWebsiteStats();
         updateDashboardStats();
         displayWebsites();
     } catch (error) {
@@ -235,50 +237,109 @@ function loadUserData() {
 }
 
 function updateDashboardStats() {
-    const websiteCount = websites.length;
+    // const websiteCount = websites.length;
     console.log('[STATS] Total websites:', websiteCount);
     document.getElementById('websiteCount').textContent = websiteCount;
-    document.getElementById('apiKeyCount').textContent = websiteCount;
+    document.getElementById('captchaCount').textContent = websiteCount;
     document.getElementById('totalWebsites').textContent = `${websiteCount} website${websiteCount !== 1 ? 's' : ''}`;
 }
 
-function generateApiKey() {
-    const apiKey = 'ck_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    console.log('[API] Generated API key:', apiKey);
-    return apiKey;
+// function generateApiKey() {
+//     const apiKey = 'ck_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+//     console.log('[API] Generated API key:', apiKey);
+//     return apiKey;
+// }
+
+async function fetchWebsiteStats() {
+    const token = localStorage.getItem('captcha_token')
+    const response = await fetch("http://127.0.0.1:8000/api/websites/stats", {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+    const stats = await response.json();
+
+    document.getElementById("websiteCount").innerText = stats.total_websites;
+    document.getElementById("captchaCount").innerText = stats.total_captchas;
+    const rate = Number(stats.captchaSuccessRate) || 0;
+    document.getElementById("captchaSuccessRate").innerText = Math.round(rate) + "%";
 }
-function addWebsite(event) {
+
+async function addWebsite(event) {
     event.preventDefault();
     console.log('[FORM] Add website form submitted');
-    const name = document.getElementById('websiteName').value.trim();
-    const url = document.getElementById('websiteUrl').value.trim();
+
+    const website_name = document.getElementById('websiteName').value.trim();
+    const website_url = document.getElementById('websiteUrl').value.trim();
     const type = document.getElementById('captchaType').value;
 
-    if (!name || !url) {
+    if (!website_name || !website_url) {
         alert('Please fill in all fields!');
         return;
     }
 
+    const token = localStorage.getItem('captcha_token')
+    if(!token){
+        showAlert('You must be logged in to add a website. Redirecting to login...','error');
+        handleLogout();
+        return;
+    }
+    const payload = {
+        website_name,
+        website_url
+    };
+
     try {
-        const newWebsite = {
-            id: Date.now().toString(),
-            name,
-            url,
-            type,
-            apiKey: generateApiKey(),
-            createdAt: new Date().toISOString()
-        };
+        console.log('[API] Registering website on backend..',payload);
 
-        websites.push(newWebsite);
-        localStorage.setItem(`websites_${currentUser.email}`, JSON.stringify(websites));
-        console.log('[FORM] Website added:', newWebsite);
+        const res = await fetch(`${API_BASE}/api/websites/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token  //
+            },
+            body: JSON.stringify(payload)
+        });
 
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            // Auth error
+            if (res.status === 401 || res.status === 403) {
+                showAlert('Session expired or unauthorized. Please log in again.', 'error');
+                handleLogout();
+                return;
+            }
+            // Other error - show backend message if present
+            const errMsg = data.detail || data.message || 'Failed to register website';
+            console.error('[API] Register website failed:', res.status, errMsg);
+            showAlert(errMsg, 'error');
+            return;
+        }
+
+        console.log('[API] Website registered successfully:', data);
+
+        // Build newWebsite object for frontend state (normalize backend fields)
+        // const newWebsite = {
+        //     id: data.website_id || data.id || Date.now().toString(),
+        //     name: data.website_name || website_name,
+        //     url: data.website_url || website_url,
+        //     type: data.type || type,
+        //     apiKey: data.api_key || data.apiKey || data.apikey,
+        //     createdAt: data.created_at || data.createdAt || new Date().toISOString()
+        // };
+
+        // websites.push(newWebsite);
+        // try {
+        //     localStorage.setItem(`websites_${currentUser.email}`, JSON.stringify(websites));
+        // } catch (e) {
+        //     console.warn('[LOCALSTORAGE] Failed to persist websites locally', e);
+        // }
+        fetchWebsiteStats();
         updateDashboardStats();
         displayWebsites();
 
-        document.getElementById('websiteName').value = '';
-        document.getElementById('websiteUrl').value = '';
-        showIntegrationCode(newWebsite);
+        // document.getElementById('websiteName').value = '';
+        // document.getElementById('websiteUrl').value = '';
+        // showIntegrationCode(newWebsite);
     } catch (error) {
         console.error('[FORM] Error adding website:', error);
         alert('Error adding website. Please try again.');
@@ -299,31 +360,93 @@ function displayEmptyWebsites() {
     }
 }
 
-function displayWebsites(){
-    const container = document.getElementById('websitesList')
-    if(!container) return;
+// function displayWebsites(){
+//     const container = document.getElementById('websitesList')
+//     if(!container) return;
 
-    if(websites.length === 0){
-        displayEmptyWebsites();
+//     if(websites.length === 0){
+//         displayEmptyWebsites();
+//         return;
+//     }
+
+//     container.innerHTML = websites.map((site,idx) => `
+//         <div class="card mb-2">
+//             <div class="card-body">
+//                 <h5>${idx + 1}. ${escapeHtml(site.name)}</h5>
+//                 <p><strong>URL:</strong> ${escapeHtml(site.url)}</p>
+                
+//                 <p><strong>API Key:</strong> ${escapeHtml(site.apiKey)}</p>
+//                 <small>Added: ${new Date(site.createdAt).toLocaleString()}</small>
+//                 <div class="mt-3">
+//                     <button class="btn btn-outline-primary btn-sm" onclick="showIntegrationCode(websites[${idx}])">
+//                         <i class="fas fa-code me-1"></i> Show Code
+//                     </button>
+//                 </div>
+//             </div>
+//         </div>
+//     `).join('');
+// }
+
+async function displayWebsites(){
+
+    const token = localStorage.getItem('captcha_token')
+    if(!token){
+        showAlert('You must be logged in to add a website. Redirecting to login...','error');
+        handleLogout();
         return;
     }
+    try {
+        console.log('[API] Fetching websites for current user..');
 
-    container.innerHTML = websites.map((site,idx) => `
-        <div class="card mb-2">
-            <div class="card-body">
-                <h5>${idx + 1}. ${escapeHtml(site.name)}</h5>
-                <p><strong>URL:</strong> ${escapeHtml(site.url)}</p>
+        const res = await fetch(`${API_BASE}/api/websites/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+
+        if (!res.ok) {
+            showAlert('Failed to fetch websites', 'error');
+            return;
+        }
+
+        const data = await res.json();
+        userWebsites = data;
+        console.log('[API] Websites received:', data);
+
+        const container = document.getElementById('websitesList');
+        // container.innerHTML = ''; // clear old ones
+
+        if (data.length === 0) {
+            container.innerHTML = '<p>No websites added yet.</p>';
+            return;
+        }
+
+        container.innerHTML = data.map((site,idx) => `
+         <div class="card mb-2">
+             <div class="card-body">
+                 <h5>${idx + 1}. ${escapeHtml(site.website_name)}</h5>
+                 <p><strong>URL:</strong> ${escapeHtml(site.website_url)}</p>
                 
-                <p><strong>API Key:</strong> ${escapeHtml(site.apiKey)}</p>
-                <small>Added: ${new Date(site.createdAt).toLocaleString()}</small>
-                <div class="mt-3">
-                    <button class="btn btn-outline-primary btn-sm" onclick="showIntegrationCode(websites[${idx}])">
-                        <i class="fas fa-code me-1"></i> Show Code
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
+                 <p><strong>API Key:</strong> ${escapeHtml(site.api_key)}</p>
+                 <small>Added: ${escapeHtml(site.created_at)}</small>
+                 <div class="mt-3">
+                     <button class="btn btn-outline-primary btn-sm" onclick="showIntegrationCode(${site.id})">
+                         <i class="fas fa-code me-1"></i> Show Code
+                     </button>
+                     <a href="website_stats.html" class="btn btn-outline-primary btn-sm" role="button">
+  <i class="fas fa-chart-pie me-1"></i> Show Stats
+</a>
+                 </div>
+             </div>
+         </div>
+     `).join('');
+
+    } catch (error) {
+        console.error(error);
+        showAlert('Something went wrong while fetching websites', 'error');
+    }
 }
 
 function escapeHtml(text) {
@@ -437,7 +560,7 @@ function generateCaptchaCode(website) {
 const API_KEY = "abc123"; // Your provided API key
         let captchaId = null;
 
-        // 1ï¸âƒ£ Load CAPTCHA when page opens
+        //  Load CAPTCHA when page opens
         async function loadCaptcha() {
             const res = await fetch("http://127.0.0.1:8000/generate-captcha?api_key=" + API_KEY);
             captchaId = res.headers.get("captcha-id");
@@ -446,7 +569,7 @@ const API_KEY = "abc123"; // Your provided API key
             document.getElementById("captchaImage").src = URL.createObjectURL(blob);
         }
         
-        // 2ï¸âƒ£ Handle form submit
+        //  Handle form submit
         document.getElementById("loginForm").addEventListener("submit", async (e) => {
             e.preventDefault();
 
@@ -507,6 +630,93 @@ input {
   return { html, js, css };
 }
 
+async function fetchStatsForCurrentUser() {
+    const token = localStorage.getItem('captcha_token');
+    if(!token){
+        showAlert('You must be logged in to add a website. Redirecting to login...','error');
+        handleLogout();
+        return;
+    }
+    try {
+    //  Fetch all websites of current user
+    const websitesRes = await fetch(`${API_BASE}/api/websites/`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const websites = await websitesRes.json();
+
+    if (!websites || websites.length === 0) {
+      console.log('No websites found for this user.');
+      return;
+    }
+
+    //  Pick the first website
+    const websiteId = websites[0].id;
+
+    //  Fetch stats for this website
+    const statsRes = await fetch(`${API_BASE}/stats/${websiteId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const stats = await statsRes.json();
+
+    //  Update stats cards
+    document.getElementById('websiteCount').innerText = websites.length;
+    document.getElementById('captchaCount').innerText = stats.total_generated || 0;
+    document.getElementById('successRate').innerText = stats.success_rate != null 
+        ? stats.success_rate.toFixed(2) + '%' 
+        : '0';
+
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+  }
+}
+
+// Call the function after page loads
+window.addEventListener('DOMContentLoaded', fetchStatsForCurrentUser);
+
+
+async function fetchRecentActivity() {
+  const token = localStorage.getItem('captcha_token');
+  if (!token) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/recent-activity`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch recent activity");
+    }
+
+    const activities = await res.json();
+
+    const tbody = document.getElementById('activityTable').querySelector('tbody');
+    tbody.innerHTML = '';
+
+    activities.forEach((act, index) => {
+      const row = document.createElement('tr');
+
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${act.website}</td>
+        <td>${act.ip}</td>
+        <td>
+          <span class="status ${act.status ? 'success' : 'error'}">
+            ${act.status ? 'Success' : 'Error'}
+          </span>
+        </td>
+        <td>${act.time}</td>
+      `;
+
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error fetching activity:', err);
+  }
+}
+
+
+// call on load
+window.addEventListener('DOMContentLoaded', fetchRecentActivity);
 
 
 

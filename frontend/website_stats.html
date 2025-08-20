@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Website Stats</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="website_style.css">
+</head>
+<body>
+  <div class="container">
+    <h2 class="title">📊 Website Statistics</h2>
+
+    <!-- Stats Cards -->
+    <div id="statsCards" class="stats-grid">
+      <div class="card purple">
+        <h3 id="websiteCount">0</h3>
+        <p>Websites</p>
+      </div>
+      <div class="card blue">
+        <h3 id="captchaCount">0</h3>
+        <p>Total Captchas</p>
+      </div>
+      <div class="card green">
+        <h3 id="successRate">0</h3>
+        <p>Success Rate</p> 
+      </div>
+    </div>
+
+    <!-- Recent Activity Table -->
+    <div class="recent-activity">
+      <h3>Recent Activity</h3>
+      <table id="activityTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Website</th>
+            <th>IP Address</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Example static row -->
+          <tr>
+            <td>1</td>
+            <td>example.com</td>
+            <td>192.168.1.1</td>
+            <td><span class="status success">Success</span></td>
+            <td>2025-08-19 12:45</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>myapp.com</td>
+            <td>10.0.0.2</td>
+            <td><span class="status error">Error</span></td>
+            <td>2025-08-19 13:05</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-btn">
+      <button onclick="window.history.back()" class="btn btn-primary">
+        ← Back to Dashboard
+      </button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

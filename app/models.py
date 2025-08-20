@@ -11,6 +11,8 @@ class User(Base):
     hashed_password = Column(String(200), nullable=False)
     auth_token = Column(String(500),nullable=False)
 
+    websites = relationship("Website", back_populates="user", cascade="all, delete-orphan")
+
 class Website(Base):
     __tablename__ = "websites"
     
@@ -22,7 +24,9 @@ class Website(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
 
+    user = relationship("User", back_populates="websites")
     stats = relationship("CaptchaStats", uselist=False, back_populates="website", cascade="all, delete-orphan")
+    captchas = relationship("Captcha", back_populates="website", cascade="all, delete-orphan")
 
 class CaptchaStats(Base):
     __tablename__ = "captcha_stats"
@@ -44,7 +48,10 @@ class CaptchaAttempts(Base):
     captcha_id = Column(Integer, ForeignKey("captchas.id"), nullable=False)
     user_ip = Column(String,nullable=False)
     success = Column(Boolean,default=False)
-    verified_at = Column(DateTime, default=datetime.utcnow())
+    verified_at = Column(DateTime, default=datetime.utcnow)
+
+    captcha = relationship("Captcha", back_populates="attempts")
+    
 
 
 class Captcha(Base):
@@ -54,4 +61,5 @@ class Captcha(Base):
     value = Column(String,nullable=False)
     generated_at = Column(DateTime, default=datetime.utcnow)
 
-
+    website = relationship("Website", back_populates="captchas")
+    attempts = relationship("CaptchaAttempts", back_populates="captcha", cascade="all, delete-orphan")

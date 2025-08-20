@@ -30,3 +30,13 @@ class WebsiteResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class CaptchaAttemptOut(BaseModel):
+    id: int
+    captcha_id: int
+    user_ip: str
+    success: bool
+    verified_at: datetime
+
+    class Config:
+        orm_mode = True
