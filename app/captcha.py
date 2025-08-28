@@ -8,12 +8,14 @@ import string
 import io
 from fastapi.responses import StreamingResponse
 from app import models,schemas
+from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 from app.config import SessionLocal
 from datetime import datetime
 from fastapi import Path
 from app.models import Captcha, CaptchaAttempts
 from app.auth import get_current_user
+from datetime import datetime,timedelta
 
 router = APIRouter()
 
@@ -23,8 +25,7 @@ def get_db():
         yield db
     finally:
         db.close()
-# In-memory store (replace with Redis/DB in prod)
-# captcha_store = {}
+
 
 class CaptchaInput(BaseModel):
     captcha_id: str
@@ -104,6 +105,7 @@ def verify_captcha(data: CaptchaInput, request: Request, x_api_key: str = Header
     user_ip = request.client.host
     attempt = CaptchaAttempts(
         captcha_id=captcha.id,
+        website_id = website.id,
         user_ip=user_ip,
         success=success
     )
@@ -171,3 +173,73 @@ def get_recent_activity(
         })
 
     return results
+
+@router.get("/attempts/last-30-days/{website_id}")
+def get_captcha_attempts_last_30_days(
+    website_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)  # ensures only logged-in user
+):
+    # Verify that the website belongs to the current user
+    website = db.query(models.Website).filter(
+        models.Website.id == website_id,
+        models.Website.user_id == current_user.id
+    ).first()
+
+    if not website:
+        raise HTTPException(status_code=403, detail="Not authorized to view this website")
+
+    # Calculate last 30 days window
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+    count = db.query(models.CaptchaAttempts).filter(
+        models.CaptchaAttempts.website_id == website_id,
+        models.CaptchaAttempts.verified_at >= thirty_days_ago
+    ).count()
+
+    return {
+        "website_id": website_id,
+        "captcha_attempts_last_30_days": count
+    }
+
+@router.get("/attempts/daily/{website_id}")
+def get_captcha_attempts_daily(
+    website_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):  
+    website = db.query(models.Website).filter(
+        models.Website.id == website_id,
+        models.Website.user_id == current_user.id
+    ).first()
+
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+    results = (
+        db.query(
+            func.date(models.CaptchaAttempts.verified_at).label("date"),
+            func.count().label("total"),
+            func.sum(case((models.CaptchaAttempts.success == True, 1), else_=0)).label("success"),
+            func.sum(case((models.CaptchaAttempts.success == False, 1), else_=0)).label("failed"),
+        )
+        .filter(
+            models.CaptchaAttempts.website_id == website_id,
+            models.CaptchaAttempts.verified_at >= thirty_days_ago
+        )
+        .group_by(func.date(models.CaptchaAttempts.verified_at))
+        .order_by(func.date(models.CaptchaAttempts.verified_at))
+        .all()
+    )
+
+    daily_stats = []
+    for row in results:
+        success_rate = (row.success / row.total * 100) if row.total > 0 else 0
+        daily_stats.append({
+            "date": row.date,
+            "total": row.total,
+            "success": row.success,
+            "failed": row.failed,
+            "success_rate": f"{success_rate:.2f}%"
+        })
+
+    return {"website_id": website_id, "daily_statistics": daily_stats}

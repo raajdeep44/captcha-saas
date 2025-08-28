@@ -1,44 +1,89 @@
-const API_BASE = 'http://localhost:8000'; // replace with your backend URL
-const token = localStorage.getItem('captcha_token')
-    if(!token){
-        showAlert('You must be logged in to add a website. Redirecting to login...','error');
-        handleLogout();
-        return;
-    }
+const API_BASE = 'http://127.0.0.1:8000/'; // replace with your backend URL
+const token = localStorage.getItem('captcha_token');
+const websiteId = localStorage.getItem('selected_website_id'); // <-- get saved website ID
+
+if (!token || !websiteId) {
+    showAlert('You must be logged in and select a website first. Redirecting...','error');
+    handleLogout();
+    throw new Error("Missing token or websiteId");
+}
+
 async function fetchStatsAndActivity() {
   try {
-    // Fetch stats
-    const statsRes = await fetch(`${API_BASE}/stats/`);
+    console.log(`[API] Fetching stats for website ID: ${websiteId}`);
+
+    // Fetch stats for this website
+    const statsRes = await fetch(`http://127.0.0.1:8000/stats/${websiteId}`, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!statsRes.ok) throw new Error("Failed to fetch stats");
     const stats = await statsRes.json();
+
+    // Fill DOM with stats
     
-    document.getElementById('websiteCount').innerText = stats.websiteCount || 0;
-    document.getElementById('captchaCount').innerText = stats.captchaCount || 0;
-    document.getElementById('successRate').innerText = stats.successRate ? stats.successRate + '%' : '0';
+    document.getElementById('siteCaptchaCount').innerText = stats.total_generated || 0;
+    const rate = stats.success_rate;
+    document.getElementById('siteSuccessRate').innerText = Math.round(rate) ? Math.round(rate) + '%' : '0';
 
-    // Fetch recent activity
-    const activityRes = await fetch(`${API_BASE}/api/activity`);
-    const activities = await activityRes.json();
+    // Fetch recent activity for this website
+    const activityRes = await fetch(`http://127.0.0.1:8000/attempts/daily/${websiteId}`, {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
 
+    if (!activityRes.ok) throw new Error("Failed to fetch activity");
+    const data = await activityRes.json();
+    const activities = data.daily_statistics;
+
+    // Render activity table
     const tbody = document.getElementById('activityTable').querySelector('tbody');
-    tbody.innerHTML = ''; // clear existing rows
+    tbody.innerHTML = ''; // clear old rows
 
     activities.forEach((activity, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${activity.website}</td>
-        <td>${activity.ip}</td>
-        <td><span class="status ${activity.status.toLowerCase()}">${activity.status}</span></td>
-        <td>${activity.time}</td>
+        <td>${activity.date}</td> 
+        <td>${activity.total}</td>
+        <td>${activity.success}</td>
+        <td>${activity.failed}</td>
+        <td>${activity.success_rate}</td>
       `;
       tbody.appendChild(row);
     });
 
   } catch (error) {
     console.error('Error fetching stats/activity:', error);
+    showAlert('Error fetching stats or activity', 'error');
   }
 }
 
 // Call the function on page load
 window.addEventListener('DOMContentLoaded', fetchStatsAndActivity);
 
+async function getCaptchaAttemptsLast30Days(){
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/attempts/last-30-days/${websiteId}`,{
+        headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch stats");
+    const data = await response.json();
+
+    document.getElementById('last30days').innerText = data.captcha_attempts_last_30_days || 0;
+  }
+  catch(err) {
+      console.error('[ERROR] Fetching captcha attempts failed:', err);
+      showAlert('Failed to fetch captcha attempts. Please try again.', 'error');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', getCaptchaAttemptsLast30Days);

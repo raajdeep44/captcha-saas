@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 # from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -6,7 +6,14 @@ from app import schemas, models, utils
 from app.config import SessionLocal
 from jose import JWTError, jwt
 import secrets
+import os,httpx
+from dotenv import load_dotenv
+
+load_dotenv()
+
 router = APIRouter()
+
+IPINFO_TOKEN = os.getenv("IPINFO_APIKEY")
 
 def get_db():
     db = SessionLocal()
@@ -14,17 +21,13 @@ def get_db():
         yield db
     finally:
         db.close()
-SECRET_KEY = "igcAymOEHSVQ9qbK46R9hIHYAOlmjQw8OZZoF6cDo/T0wcYVlm6iTvgSCsfGM8Bs"
-ALGORITHM = "HS256"
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 security = HTTPBearer()  # tells Swagger this API uses HTTP Bearer auth
 
-# def get_current_user(db: Session = Depends(get_db)):
-#     # TEMP — always return user with id 12
-#     user = db.query(models.User).filter(models.User).first()
-#     if not user:
-#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-#     return user
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -32,10 +35,10 @@ def get_current_user(
 ):  
     token = credentials.credentials
     try:
-        # 1️⃣ Decode the JWT token
+        # Decode the JWT token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         print("jwt token :",payload)
-        # 2️⃣ Extract user_id ("sub" claim from JWT)
+        # Extract user_id ("sub" claim from JWT)
         # id : int = payload.get("sub")
         username : str = payload.get("sub").split("_")[0]
         # print("user id :",user_id)
@@ -46,25 +49,51 @@ def get_current_user(
         # If token invalid/expired
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # 3️⃣ Look up the user in DB
+    # Look up the user in DB
     user = db.query(models.User).filter(models.User.username == username).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
-    # 4️⃣ Return the user → now endpoint has `current_user`
+    # Return the user → now endpoint has `current_user`
     return user
 
 
 
 # @router.post("/register", response_model=schemas.ShowUser)
 @router.post("/register")
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def register(user: schemas.UserCreate,request: Request, db: Session = Depends(get_db)):
     if db.query(models.User).filter(models.User.username == user.username).first():
         raise HTTPException(status_code=400, detail="Username already taken")
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     hashed_pwd = utils.hash_password(user.password)
-    new_user = models.User(username=user.username, email=user.email, hashed_password=hashed_pwd)
+    
+    user_ip = request.client.host
+    # user_ip =  "122.176.125.107"
+    print("ipinfo api key ",IPINFO_TOKEN)
+    url = f"https://ipinfo.io/{user_ip}/json?token={IPINFO_TOKEN}"
+    res = httpx.get(url)
+   
+    if res.status_code == 200:
+        data = res.json()
+        region = data.get("region")
+        print("region",region)
+        city = data.get("city")
+        print("city ",city)
+        country = data.get("country")
+    else: 
+        region = country = city = None
+    new_user = models.User(
+        username=user.username,
+        email=user.email,
+        hashed_password=hashed_pwd,
+        role = 'user',
+        ip_address = user_ip,
+        region = region,
+        city = city,
+        country = country
+    )
+    
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

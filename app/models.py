@@ -10,6 +10,11 @@ class User(Base):
     email = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(200), nullable=False)
     auth_token = Column(String(500),nullable=False)
+    role = Column(String(100),nullable=False)
+    ip_address = Column(String(100),nullable=True)
+    region = Column(String(100),nullable=True)
+    city = Column(String(100),nullable=True)
+    country = Column(String(100),nullable=True)
 
     websites = relationship("Website", back_populates="user", cascade="all, delete-orphan")
 
@@ -46,12 +51,13 @@ class CaptchaAttempts(Base):
 
     id = Column(Integer,primary_key=True,index=True)
     captcha_id = Column(Integer, ForeignKey("captchas.id"), nullable=False)
+    website_id = Column(Integer, ForeignKey("websites.id"), nullable=False)
     user_ip = Column(String,nullable=False)
     success = Column(Boolean,default=False)
     verified_at = Column(DateTime, default=datetime.utcnow)
 
     captcha = relationship("Captcha", back_populates="attempts")
-    
+    website = relationship("Website")
 
 
 class Captcha(Base):

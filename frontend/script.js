@@ -12,10 +12,73 @@ document.addEventListener('DOMContentLoaded', function () {
     
 });
 
+// Update your existing login success function
+function handleLoginSuccess(userData, token) {
+    // Store authentication data in localStorage
+    localStorage.setItem('captcha_token', token);
+    localStorage.setItem('captcha_user', JSON.stringify(userData));
+    
+    // Show dashboard
+    document.getElementById('authSection').style.display = 'none';
+    document.getElementById('dashboardSection').style.display = 'block';
+    
+    // Update user name
+    document.getElementById('userName').textContent = userData.name || 'User';
+    
+    console.log('Login successful');
+}
+
+// Update your existing logout function
+// function handleLogout() {
+//     // Clear stored authentication data
+//     localStorage.removeItem('authToken');
+//     localStorage.removeItem('userData');
+//     sessionStorage.clear();
+    
+//     // Show login section
+//     document.getElementById('authSection').style.display = 'block';
+//     document.getElementById('dashboardSection').style.display = 'none';
+    
+//     console.log('User logged out');
+    
+//     // If on websites.html, redirect to index.html
+//     if (window.location.pathname.includes('websites.html')) {
+//         window.location.href = 'index.html';
+//     }
+// }
+function handleLogout() {
+    console.log('[LOGOUT] User logging out...');
+    try {
+        // Clear stored authentication data - use correct keys
+        localStorage.removeItem('captcha_user');    // ✅ Correct key
+        localStorage.removeItem('captcha_token');   // ✅ Correct key
+        sessionStorage.clear();
+        
+        currentUser = null;
+        
+        // Show login section
+        document.getElementById('authSection').style.display = 'block';
+        document.getElementById('dashboardSection').style.display = 'none';
+        
+        console.log('User logged out');
+        
+        // If on websites.html, redirect to index.html
+        if (window.location.pathname.includes('websites.html')) {
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error('[LOGOUT] Error:', error);
+    }
+}
+
+
+
 function initializeApp() {
     console.log('[INIT] Initializing application...');
     checkAuthStatus();
-    displayWebsites();
+    // displayWebsites();
+    // fetchWebsiteStats();
+    // fetchRecentActivity();
 }
 
 function setupEventListeners() {
@@ -42,7 +105,9 @@ function checkAuthStatus() {
     try {
         console.log('[AUTH] Checking auth status...');
         const userData = localStorage.getItem('captcha_user');
-        if (userData) {
+        const token = localStorage.getItem('captcha_token');  // ✅ ADD THIS LINE
+        
+        if (userData && token) {  // ✅ CHECK BOTH
             currentUser = JSON.parse(userData);
             console.log('[AUTH] User logged in:', currentUser.name);
             showDashboard();
@@ -56,6 +121,8 @@ function checkAuthStatus() {
         showAuth();
     }
 }
+
+
 
 function showAlert(message, type = 'success') {
     console.log(`[ALERT] (${type.toUpperCase()})`, message);
@@ -118,7 +185,7 @@ function showDashboard() {
         console.log(currentUser.email)
     }
 
-    // âœ… Attach listener only now
+    //  Attach listener only now
     const websiteForm = document.getElementById('websiteForm');
     if (websiteForm) {
         websiteForm.addEventListener('submit', addWebsite);
@@ -225,24 +292,26 @@ function loadUserData() {
     try {
         // const userWebsites = JSON.parse(localStorage.getItem(`websites_${currentUser.id}`) || '[]');
         // websites = userWebsites;
-        fetchWebsiteStats();
-        updateDashboardStats();
+        // updateDashboardStats();
         displayWebsites();
+        fetchWebsiteStats();
+        fetchRecentActivity();
     } catch (error) {
         console.error('[DATA] Error loading websites:', error);
         websites = [];
         updateDashboardStats();
+        fetchWebsiteStats();
         displayEmptyWebsites();
     }
 }
 
-function updateDashboardStats() {
-    // const websiteCount = websites.length;
-    console.log('[STATS] Total websites:', websiteCount);
-    document.getElementById('websiteCount').textContent = websiteCount;
-    document.getElementById('captchaCount').textContent = websiteCount;
-    document.getElementById('totalWebsites').textContent = `${websiteCount} website${websiteCount !== 1 ? 's' : ''}`;
-}
+// function updateDashboardStats() {
+//     // const websiteCount = websites.length;
+//     console.log('[STATS] Total websites:', websiteCount);
+//     document.getElementById('websiteCount').textContent = websiteCount;
+//     document.getElementById('captchaCount').textContent = websiteCount;
+//     document.getElementById('totalWebsites').textContent = `${websiteCount} website${websiteCount !== 1 ? 's' : ''}`;
+// }
 
 // function generateApiKey() {
 //     const apiKey = 'ck_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -256,7 +325,7 @@ async function fetchWebsiteStats() {
         headers: { "Authorization": `Bearer ${token}` }
     });
     const stats = await response.json();
-
+    console.log(stats)
     document.getElementById("websiteCount").innerText = stats.total_websites;
     document.getElementById("captchaCount").innerText = stats.total_captchas;
     const rate = Number(stats.captchaSuccessRate) || 0;
@@ -333,9 +402,10 @@ async function addWebsite(event) {
         // } catch (e) {
         //     console.warn('[LOCALSTORAGE] Failed to persist websites locally', e);
         // }
-        fetchWebsiteStats();
-        updateDashboardStats();
+        
+        // updateDashboardStats();
         displayWebsites();
+        fetchWebsiteStats();
 
         // document.getElementById('websiteName').value = '';
         // document.getElementById('websiteUrl').value = '';
@@ -417,37 +487,53 @@ async function displayWebsites(){
 
         const container = document.getElementById('websitesList');
         // container.innerHTML = ''; // clear old ones
+        if (!container) {
+        console.warn("No container found for websites");
+        return;
+        }
 
         if (data.length === 0) {
             container.innerHTML = '<p>No websites added yet.</p>';
             return;
         }
 
-        container.innerHTML = data.map((site,idx) => `
-         <div class="card mb-2">
-             <div class="card-body">
-                 <h5>${idx + 1}. ${escapeHtml(site.website_name)}</h5>
-                 <p><strong>URL:</strong> ${escapeHtml(site.website_url)}</p>
-                
-                 <p><strong>API Key:</strong> ${escapeHtml(site.api_key)}</p>
-                 <small>Added: ${escapeHtml(site.created_at)}</small>
-                 <div class="mt-3">
-                     <button class="btn btn-outline-primary btn-sm" onclick="showIntegrationCode(${site.id})">
-                         <i class="fas fa-code me-1"></i> Show Code
-                     </button>
-                     <a href="website_stats.html" class="btn btn-outline-primary btn-sm" role="button">
-  <i class="fas fa-chart-pie me-1"></i> Show Stats
-</a>
-                 </div>
-             </div>
-         </div>
-     `).join('');
+        container.innerHTML = data.map((site, idx) => `
+    <div class="card mb-2">
+        <div class="card-body">
+            <h5>${idx + 1}. ${escapeHtml(site.website_name)}</h5>
+            <p><strong>URL:</strong> ${escapeHtml(site.website_url)}</p>
+            <p><strong>API Key:</strong> ${escapeHtml(site.api_key)}</p>
+            <small>Added: ${escapeHtml(site.created_at)}</small>
+            <div class="mt-3">
+                <button class="btn btn-outline-primary btn-sm" onclick="showIntegrationCode(${site.id})">
+                    <i class="fas fa-code me-1"></i> Show Code
+                </button>
+                <a href="website_stats.html" class="btn btn-outline-primary btn-sm" role="button" onclick="localStorage.setItem('selected_website_id', ${site.id})">
+                    <i class="fas fa-chart-pie me-1"></i> Show Stats
+                </a>
+
+            </div>
+        </div>
+    </div>
+`).join('');
+
 
     } catch (error) {
         console.error(error);
         showAlert('Something went wrong while fetching websites', 'error');
     }
 }
+
+function goToStats(websiteId) {
+    console.log("[ACTION] Selected website:", websiteId);
+
+    // Save to localStorage
+    localStorage.setItem("selected_website_id", websiteId);
+
+    // Redirect
+    window.location.href = "website_stats.html";
+}
+
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -630,48 +716,48 @@ input {
   return { html, js, css };
 }
 
-async function fetchStatsForCurrentUser() {
-    const token = localStorage.getItem('captcha_token');
-    if(!token){
-        showAlert('You must be logged in to add a website. Redirecting to login...','error');
-        handleLogout();
-        return;
-    }
-    try {
-    //  Fetch all websites of current user
-    const websitesRes = await fetch(`${API_BASE}/api/websites/`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const websites = await websitesRes.json();
+// async function fetchStatsForCurrentUser() {
+//     const token = localStorage.getItem('captcha_token');
+//     if(!token){
+//         showAlert('You must be logged in to add a website. Redirecting to login...','error');
+//         handleLogout();
+//         return;
+//     }
+//     try {
+//     //  Fetch all websites of current user
+//     const websitesRes = await fetch(`${API_BASE}/api/websites/`, {
+//       headers: { 'Authorization': `Bearer ${token}` }
+//     });
+//     const websites = await websitesRes.json();
 
-    if (!websites || websites.length === 0) {
-      console.log('No websites found for this user.');
-      return;
-    }
+//     if (!websites || websites.length === 0) {
+//       console.log('No websites found for this user.');
+//       return;
+//     }
 
-    //  Pick the first website
-    const websiteId = websites[0].id;
+//     //  Pick the first website
+//     const websiteId = websites[0].id;
 
-    //  Fetch stats for this website
-    const statsRes = await fetch(`${API_BASE}/stats/${websiteId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const stats = await statsRes.json();
+//     //  Fetch stats for this website
+//     const statsRes = await fetch(`${API_BASE}/stats/${websiteId}`, {
+//       headers: { 'Authorization': `Bearer ${token}` }
+//     });
+//     const stats = await statsRes.json();
 
-    //  Update stats cards
-    document.getElementById('websiteCount').innerText = websites.length;
-    document.getElementById('captchaCount').innerText = stats.total_generated || 0;
-    document.getElementById('successRate').innerText = stats.success_rate != null 
-        ? stats.success_rate.toFixed(2) + '%' 
-        : '0';
+//     //  Update stats cards
+//     document.getElementById('websiteCount').innerText = websites.length;
+//     document.getElementById('captchaCount').innerText = stats.total_generated || 0;
+//     document.getElementById('successRate').innerText = stats.success_rate != null 
+//         ? stats.success_rate.toFixed(2) + '%' 
+//         : '0';
 
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-  }
-}
+//   } catch (error) {
+//     console.error('Error fetching stats:', error);
+//   }
+// }
 
 // Call the function after page loads
-window.addEventListener('DOMContentLoaded', fetchStatsForCurrentUser);
+// window.addEventListener('DOMContentLoaded', fetchStatsForCurrentUser);
 
 
 async function fetchRecentActivity() {

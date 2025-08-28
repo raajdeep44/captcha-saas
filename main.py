@@ -1,6 +1,6 @@
 from fastapi import FastAPI , Depends , HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app import auth, models, config , captcha
+from app import auth, models, config , captcha , admin
 # from fastapi.security import OAuth2PasswordBearer
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
@@ -35,9 +35,12 @@ models.Base.metadata.create_all(bind=config.engine)
 # app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 # Routers
-app.include_router(auth.router)
-app.include_router(captcha.router)
+app.include_router(auth.router,tags=["auth"])
+app.include_router(captcha.router,tags=["captcha"])
 app.include_router(website_router, prefix="/api", tags=["websites"])
+app.include_router(admin.router,tags=["admin"])
+# app.include_router(admin_auth.router,tags=["admin"])
+# app.include_router(admin_routes.router,tags=["admin"])
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 # dashboard

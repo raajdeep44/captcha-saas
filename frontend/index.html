@@ -16,7 +16,7 @@
     <div id="authSection" class="auth-container">
         <div class="auth-card">
             <div class="text-center mb-4">
-                <div class="brand-logo">🛡️</div>
+                <div class="brand-logo">🛡</div>
                 <h2 class="fw-bold text-primary">CAPTCHA SaaS</h2>
                 <p class="text-muted">Secure your website with our CAPTCHA service</p>
             </div>
@@ -29,7 +29,7 @@
                 <h4 class="mb-4 text-center">Welcome Back</h4>
                 <form id="loginFormElement">
                     <div class="mb-3">
-                        <label class="form-label">Email Email</label>
+                        <label class="form-label">Enter Email</label>
                         <input type="text" class="form-control" id="loginEmail" placeholder="Enter your email" required>
                     </div>
                     <div class="mb-4">
@@ -83,10 +83,14 @@
                     <i class="fas fa-shield-alt me-2"></i>CAPTCHA SaaS
                 </a>
                 <div class="navbar-nav ms-auto">
+
                     <span class="navbar-text me-3">
                         <i class="fas fa-user-circle me-2"></i>
                         Welcome, <strong id="userName">User</strong>
                     </span>
+                    <a class="btn btn-outline-primary btn-sm me-2" href="websites.html">
+                        <i class="fas fa-globe me-1"></i> Websites
+                    </a>
                     <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">
                         <i class="fas fa-sign-out-alt me-2"></i>Logout
                     </button>
@@ -159,70 +163,10 @@
     </div>
 
             <!-- Add Website Form -->
-            <div class="row mb-4">
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add New Website</h5>
-                        </div>
-                        <div class="card-body">
-                            <form id="websiteForm">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Website Name</label>
-                                            <input type="text" class="form-control" id="websiteName" placeholder="My Awesome Website" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Website URL</label>
-                                            <input type="url" class="form-control" id="websiteUrl" placeholder="https://example.com" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">CAPTCHA Type</label>
-                                    <select class="form-select" id="captchaType">
-                                        <option value="math">Image</option>
-                                        <!-- <option value="checkbox">Checkbox Verification</option>
-                                        <option value="invisible">Invisible Protection</option> -->
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-magic me-2"></i>Generate CAPTCHA Code
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <i class="fas fa-rocket fa-3x text-info mb-3"></i>
-                            <h5>Quick Start Guide</h5>
-                            <p class="text-muted small">1. Add your website details<br>2. Generate CAPTCHA code<br>3. Copy & paste into your site</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- Websites List -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Your Protected Websites</h5>
-                            <span class="badge bg-primary" id="totalWebsites">0 websites</span>
-                        </div>
-                        <div class="card-body">
-                            <div id="websitesList">
-                                <!-- Websites will be populated here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            
         </div>
     </div>
 
