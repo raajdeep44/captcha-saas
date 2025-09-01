@@ -10,7 +10,10 @@ from app.config import get_db
 from sqlalchemy.orm import Session
 # In your main.py or wherever you initialize FastAPI
 from app.website import router as website_router
-
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import PlainTextResponse
+from app.auth import get_current_user   
+from fastapi.responses import FileResponse
 
 
 app = FastAPI()
@@ -28,11 +31,16 @@ app.add_middleware(
     expose_headers=["*"],  # <-- 🔥 this is important!
 )
 
+
 # DB setup
 models.Base.metadata.create_all(bind=config.engine)
 
+# @app.get("/config.js")
+# def config_js():
+#     api_base = os.getenv("API_BASE", "http://127.0.0.1:8000")
+#     js_content = f"const API_BASE = '{api_base}';"
+#     return PlainTextResponse(js_content, media_type="application/javascript")
 
-# app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 # Routers
 app.include_router(auth.router,tags=["auth"])
@@ -61,3 +69,16 @@ Base.metadata.create_all(bind=engine)
 
 
 
+app.mount("/", StaticFiles(directory="frontend", html=True), name="user")
+
+app.mount("/", StaticFiles(directory="admin_frontend", html=True), name="admin")
+
+# app.mount("/user", StaticFiles(directory="frontend", html=True), name="user_dashboard")
+# app.mount("/admin", StaticFiles(directory="admin_frontend", html=True), name="admin_dashboard")
+
+# @app.get("/dashboard")
+# def dashboard(current_user=Depends(get_current_user)):
+#     if current_user.role == "admin":
+#         return FileResponse("admin_frontend/index.html")
+#     else:
+#         return FileResponse("frontend/index.html")

@@ -243,3 +243,5 @@ def get_captcha_attempts_daily(
         })
 
     return {"website_id": website_id, "daily_statistics": daily_stats}
+
+

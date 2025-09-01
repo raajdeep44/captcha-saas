@@ -13,8 +13,6 @@ load_dotenv()
 
 router = APIRouter()
 
-IPINFO_TOKEN = os.getenv("IPINFO_APIKEY")
-
 def get_db():
     db = SessionLocal()
     try:
@@ -68,14 +66,15 @@ def register(user: schemas.UserCreate,request: Request, db: Session = Depends(ge
         raise HTTPException(status_code=400, detail="Email already registered")
     hashed_pwd = utils.hash_password(user.password)
     
-    user_ip = request.client.host
+    # user_ip = request.client.host
     # user_ip =  "122.176.125.107"
-    print("ipinfo api key ",IPINFO_TOKEN)
-    url = f"https://ipinfo.io/{user_ip}/json?token={IPINFO_TOKEN}"
+    # print("ipinfo api key ",IPINFO_TOKEN)
+    url = f"https://ipinfo.io/json"
     res = httpx.get(url)
    
     if res.status_code == 200:
         data = res.json()
+        user_ip = data.get("ip")
         region = data.get("region")
         print("region",region)
         city = data.get("city")
@@ -111,7 +110,20 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         token = utils.create_access_token(data={"sub": subject })
         db_user.auth_token = token
         db.commit()
-        return {"message": "Login Successful", "access_token": token, "token_type": "bearer","username":db_user.username , "email" : db_user.email}
+
+        if db_user.role == 'admin':
+            redirect_url = "/admin_index.html"
+        else :
+            redirect_url = "/index.html"
+
+        return {"message": "Login Successful",
+                "access_token": token,
+                "token_type": "bearer",
+                "username":db_user.username ,
+                "email" : db_user.email,
+                "role": db_user.role,
+                "redirect_url": redirect_url
+            }
     except Exception as e:
         print("Login Error:", e)
         raise HTTPException(status_code=500, detail="Internal server error")

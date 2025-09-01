@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <base href="/admin/"> -->
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="admin_style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <div class="header-bar">
+            <h2 id="welcomeMsg"></h2>
+            <button id="logoutBtn">Logout</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card" id="usersCard" onclick="showUsers()">
+                <h2>Total Users</h2>
+                <p class="count" id="totalUsers">0</p>
+            </div>
+            <div class="card" id="websitesCard" onclick="showWebsites()">
+                <h2>Registered Websites</h2>
+                <p class="count" id="totalWebsites">0</p>
+            </div>
+            <div class="card">
+                <h2>Captcha Success Rate</h2>
+                <p class="count" id="captchaRate">0%</p>
+            </div>
+        </div>
+        <div class="chart-container">
+            <div class="chart">
+                <h3>Captcha Interactions (Completed)</h3>
+                <canvas id="interactionsChart1"></canvas>
+            </div>
+            <div class="chart">
+                <h3>Captcha Pass/Fail Outcomes</h3>
+                <canvas id="outcomesChart"></canvas>
+            </div>
+            <div class="chart">
+                <h3>Captcha Interactions (Completed)</h3>
+                <canvas id="interactionsChart3"></canvas>
+            </div>
+        </div>
+        <div class="details-container" id="detailsTable">
+            <!-- Dynamically filled by JS based on card click -->
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="admin_script.js"></script>
+</body>
+</html>

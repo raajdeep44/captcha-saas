@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from app.config import get_db
 from app import models,schemas
 from app.auth import get_current_user
-
-
+from sqlalchemy import func, case
+from datetime import datetime,date
 router = APIRouter()
 
 
@@ -97,3 +97,58 @@ def get_all_sites_data(current_user : models.User = Depends(get_current_user), d
     
 
     return results
+
+@router.get("/stats-admin/captcha-completions")
+def get_captcha_completions_data(current_user : models.User = Depends(get_current_user), db : Session = Depends(get_db)):
+
+    if current_user.role != "admin":
+        raise HTTPException(status_code=401,detail="role is not valid")
+    
+    results = (
+        db.query(func.date(models.CaptchaAttempts.verified_at),func.count())
+        .filter(models.CaptchaAttempts.success == 1)
+        .group_by(func.date(models.CaptchaAttempts.verified_at))
+        .all()
+    )
+
+    labels = [date.strftime("%d-%m-%Y") for date, count in results]
+    data = [count for date, count in results]
+
+    return {"labels": labels,"data":data}
+
+@router.get("/stats-admin/captcha-pass-fail")
+def get_captcha_pass_fail(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=401, detail="Not authorized")
+
+    total_pass = db.query(models.CaptchaAttempts).filter(models.CaptchaAttempts.success == 1).count()
+    total_fail = db.query(models.CaptchaAttempts).filter(models.CaptchaAttempts.success == 0).count()
+
+    return {"pass": total_pass, "fail": total_fail}
+
+@router.get("/stats-admin/captcha-pass-fail-daywise")
+def get_captcha_pass_fail_daywise(db: Session = Depends(get_db)):
+    # if current_user.role != "admin":
+    #     raise HTTPException(status_code=401, detail="Not authorized")
+    
+    results = (
+        db.query(
+            func.date(models.CaptchaAttempts.verified_at).label("date"),
+            models.CaptchaAttempts.success,
+            func.count().label("count")
+        )
+        .group_by(func.date(models.CaptchaAttempts.verified_at), models.CaptchaAttempts.success)
+        .all()
+    )
+
+    data = {}
+    for row in results:
+        date = str(row.date)
+        if date not in data:
+            data[date] = {"passed": 0, "failed": 0}
+        if row.success == 1:
+            data[date]["passed"] = row.count
+        else:
+            data[date]["failed"] = row.count
+
+    return [{"date": d, **vals} for d, vals in data.items()]

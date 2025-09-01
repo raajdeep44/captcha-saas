@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:8000/'; // replace with your backend URL
+const API_BASE = 'http://127.0.0.1:8000'; // replace with your backend URL
 const token = localStorage.getItem('captcha_token');
 const websiteId = localStorage.getItem('selected_website_id'); // <-- get saved website ID
 
@@ -13,7 +13,7 @@ async function fetchStatsAndActivity() {
     console.log(`[API] Fetching stats for website ID: ${websiteId}`);
 
     // Fetch stats for this website
-    const statsRes = await fetch(`http://127.0.0.1:8000/stats/${websiteId}`, {
+    const statsRes = await fetch(`${API_BASE}/stats/${websiteId}`, {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json'
@@ -30,7 +30,7 @@ async function fetchStatsAndActivity() {
     document.getElementById('siteSuccessRate').innerText = Math.round(rate) ? Math.round(rate) + '%' : '0';
 
     // Fetch recent activity for this website
-    const activityRes = await fetch(`http://127.0.0.1:8000/attempts/daily/${websiteId}`, {
+    const activityRes = await fetch(`${API_BASE}/attempts/daily/${websiteId}`, {
       headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json'
@@ -68,7 +68,7 @@ window.addEventListener('DOMContentLoaded', fetchStatsAndActivity);
 
 async function getCaptchaAttemptsLast30Days(){
   try {
-    const response = await fetch(`http://127.0.0.1:8000/attempts/last-30-days/${websiteId}`,{
+    const response = await fetch(`${API_BASE}/attempts/last-30-days/${websiteId}`,{
         headers: {
         'Authorization': 'Bearer ' + token,
         'Content-Type': 'application/json'

@@ -1,5 +1,8 @@
 // Global variables
-const API_BASE = "http://127.0.0.1:8000"; 
+
+// console.log(API_BASE)
+
+const API_BASE = "http://127.0.0.1:8000";
 let currentUser = null;
 let userWebsites = [];
 let selectedWebsite = null;
@@ -12,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
 });
 
-// Update your existing login success function
+// Update your existing login success function  
 function handleLoginSuccess(userData, token) {
     // Store authentication data in localStorage
     localStorage.setItem('captcha_token', token);
@@ -216,7 +219,7 @@ async function handleSignup(event) {
 
     try {
         console.log('[SIGNUP] Sending request to backend');
-        const response = await fetch('http://localhost:8000/register', {
+        const response = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: name, email, password })
@@ -249,7 +252,7 @@ async function handleLogin(event) {
 
     try {
         console.log('[LOGIN] Sending request to backend');
-        const response = await fetch('http://localhost:8000/login', {
+        const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -259,12 +262,21 @@ async function handleLogin(event) {
 
         if (response.ok) {
             localStorage.setItem('captcha_token', data.access_token);
+            console.log("token for testing:",data.access_token);
+            localStorage.setItem('username',data.username)
             currentUser = { name: data.username, email :data.email };
             localStorage.setItem('captcha_user', JSON.stringify(currentUser));
             showAlert('Login successful! Welcome back!');
             setTimeout(() => {
-                showDashboard();
-                loadUserData();
+                // redirecting to the dashboard based on role
+                if(data.redirect_url){
+                    window.location.href = data.redirect_url;
+                }
+                else{
+                    showDashboard();
+                    loadUserData();
+                }
+                
             }, 1500);
         } else {
             showAlert(data.detail || 'Invalid email or password!', 'error');
@@ -321,7 +333,7 @@ function loadUserData() {
 
 async function fetchWebsiteStats() {
     const token = localStorage.getItem('captcha_token')
-    const response = await fetch("http://127.0.0.1:8000/api/websites/stats", {
+    const response = await fetch(`${API_BASE}/api/websites/stats`, {
         headers: { "Authorization": `Bearer ${token}` }
     });
     const stats = await response.json();
@@ -359,7 +371,7 @@ async function addWebsite(event) {
     try {
         console.log('[API] Registering website on backend..',payload);
 
-        const res = await fetch(`${API_BASE}/api/websites/`, {
+        const res = await fetch(`${API_BASE}/api/websites`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -468,7 +480,7 @@ async function displayWebsites(){
     try {
         console.log('[API] Fetching websites for current user..');
 
-        const res = await fetch(`${API_BASE}/api/websites/`, {
+        const res = await fetch(`${API_BASE}/api/websites`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -648,7 +660,7 @@ const API_KEY = "abc123"; // Your provided API key
 
         //  Load CAPTCHA when page opens
         async function loadCaptcha() {
-            const res = await fetch("http://127.0.0.1:8000/generate-captcha?api_key=" + API_KEY);
+            const res = await fetch("${API_BASE}/generate-captcha?api_key=" + API_KEY);
             captchaId = res.headers.get("captcha-id");
             console.log("loaded captchaID:",captchaId);
             const blob = await res.blob();
@@ -668,7 +680,7 @@ const API_KEY = "abc123"; // Your provided API key
             return;
             }
 
-            const res = await fetch("http://127.0.0.1:8002/login", {
+            const res = await fetch("${API_BASE}/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
